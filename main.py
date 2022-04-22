@@ -6,8 +6,9 @@ from skimage.morphology import skeletonize as skl
 from scipy.interpolate import interp1d
 from skimage.filters import meijering
 #from CubicSpline import my_cubic_interp1d
-from sklearn.metrics import mean_absolute_percentage_error
+# from sklearn.metrics import mean_absolute_percentage_error
 from CS import CS
+
 
 def morphology_diff(contrast_green, clahe):
 
