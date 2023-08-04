@@ -9,7 +9,7 @@ from skimage.filters import meijering
 # from sklearn.metrics import mean_absolute_percentage_error
 from CS import CS
 
-
+# Размытие картинки для уменьшения количества шумов
 def morphology_diff(contrast_green, clahe):
 
     open1 = cv2.morphologyEx(contrast_green, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_CROSS, (5, 5)),
@@ -38,7 +38,7 @@ def morphology_diff(contrast_green, clahe):
     # step4 = cv2.morphologyEx(step3, cv2.MORPH_CLOSE, close_kernel, iterations=3)
     # make diff between contrast_green & blured vision
     contrast_morph = cv2.subtract(close3, contrast_green)
-    #cv2.imshow("fg", clahe.apply(open2))
+    #cv2.imshow("fg", clahe.apply(contrast_morph))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -55,7 +55,7 @@ def remove_noise(morph_image):
     im = cv2.bitwise_and(morph_image, morph_image, mask=mask)
     ret, fin_thr = cv2.threshold(im, 15, 255, cv2.THRESH_BINARY_INV)
     new_img = cv2.erode(fin_thr, cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)), iterations=1)
-    #cv2.imshow("fg", new_img)
+    # cv2.imshow("fg", im)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return new_img
@@ -68,7 +68,7 @@ def remove_blob(clear_image, org_image):
     for cnt in xcontours:
         shape = "unidentified"
         peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 0.04 * peri, False)
+        approx = cv2.approxPolyDP(cnt, 0.04 * peri, True)
         if len(approx) > 4 and cv2.contourArea(cnt) <= 3000 and cv2.contourArea(cnt) >= 100:
             shape = "circle"
         else:
@@ -78,10 +78,13 @@ def remove_blob(clear_image, org_image):
 
     finimage = cv2.bitwise_and(fundus_eroded, fundus_eroded, mask=xmask)
     blood_vessels = cv2.bitwise_not(finimage)
-    #cv2.imshow("fg", blood_vessels)
+    # cv2.imshow("fi", finimage)
+
+    # cv2.imshow("bv", blood_vessels)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return blood_vessels
+
 
 def detect_vessel(org_image):
     copy_org_image = org_image.copy()
@@ -90,7 +93,6 @@ def detect_vessel(org_image):
     # create a CLAHE object
     clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
     contrast_green = clahe.apply(green)
-
     # get image after morph - blured & clahe
     morph_image = morphology_diff(contrast_green, clahe)
     morph_image = cv2.adaptiveThreshold(morph_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 17, 2)
@@ -102,18 +104,21 @@ def detect_vessel(org_image):
     skelet = skeleton(fin_image)
     i = 0
     j = 0
-    for gr, fin in zip(green, skelet):
-        for g, f in zip(gr, fin):
-            if (f == 0):
-                green[i][j] = 255
-            j = j + 1
-        j = 0
-        i = i + 1
-    # return fin_image
-    #cv2.imshow("fg", green)
+    # for gr, fin in zip(green, skelet):
+    #     for g, f in zip(gr, fin):
+    #         if (f == 0):
+    #             green[i][j] = 255
+    #         j = j + 1
+    #     j = 0
+    #     i = i + 1
+    # # return fin_image
+    # cv2.imshow("morph", clear_image)
+    # cv2.imshow("blob", fin_image)
+
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return skelet, fin_image, cv2.merge((blue, green, red))
+
 
 def skeleton (sk):
     # Step 1: Create an empty skeleton
@@ -146,6 +151,7 @@ def skeleton (sk):
 
     return skel
 
+
 if __name__ == "__main__":
     data_catalog = "data"
     raw_catalog = "raw_vessels"
@@ -170,7 +176,7 @@ if __name__ == "__main__":
         def mouse_drawing(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 print(x, y)
-                circles.append((x, y))
+                circles.append((x,  y * (1)))
 
         cv2.namedWindow("Frame")
         cv2.setMouseCallback("Frame", mouse_drawing)
